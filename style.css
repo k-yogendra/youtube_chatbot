@@ -1,0 +1,250 @@
+:root {
+    --bg-primary: #202124;
+    --bg-secondary: #303134;
+    --bg-tertiary: #3c4043;
+    --text-primary: #e8eaed;
+    --text-secondary: #bdc1c6;
+    --accent-primary: #8ab4f8;
+    --accent-hover: #aecbfa;
+    --user-bubble: #3c4043;
+    --bot-bubble: #202124;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    width: 380px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.header {
+    background-color: var(--bg-secondary);
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--bg-tertiary);
+    text-align: center;
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.content-section {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* API Key Section */
+#api-key-section p {
+    margin-top: 0;
+    color: var(--text-secondary);
+}
+#api-key-input {
+    width: 100%;
+    padding: 8px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 4px;
+    color: var(--text-primary);
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+/* General Buttons */
+.action-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: var(--accent-primary);
+    color: var(--bg-primary);
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+.action-btn:hover {
+    background-color: var(--accent-hover);
+}
+.action-btn:disabled {
+    background-color: var(--bg-tertiary);
+    cursor: not-allowed;
+    color: var(--text-secondary);
+}
+
+/* Status & Loader */
+#status-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+    color: var(--text-secondary);
+}
+.loader {
+    border: 3px solid var(--bg-tertiary);
+    border-top: 3px solid var(--accent-primary);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Chat Window */
+#chat-window {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Chat Messages */
+.message {
+    display: flex;
+    max-width: 85%;
+    position: relative;
+}
+.message-content {
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+.user-message {
+    align-self: flex-end;
+    background-color: var(--accent-primary);
+    color: var(--bg-primary);
+    border-bottom-right-radius: 4px;
+}
+.bot-message {
+    align-self: flex-start;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+.bot-message .message-content {
+    padding-right: 35px; /* Space for the copy button */
+}
+
+/* Thinking Message */
+.thinking-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Copy Button */
+.copy-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+.bot-message:hover .copy-btn {
+    opacity: 1;
+}
+.copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Chat Input Area */
+#chat-input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid var(--bg-tertiary);
+}
+#user-question {
+    flex-grow: 1;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 20px;
+    padding: 10px 15px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+#user-question:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+#user-question:disabled {
+    background-color: #2a2b2d;
+}
+
+#send-btn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 10px;
+}
+#send-btn:disabled {
+    color: var(--bg-tertiary);
+    cursor: not-allowed;
+}
+#send-btn svg {
+    display: block;
+}
+
+/* Utility */
+.hidden {
+    display: none !important;
+}
+
+/* Styling for the new header and clear button */
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* This is key for positioning the button */
+}
+
+.header-btn {
+    position: absolute;
+    right: 10px; /* Position it on the right side */
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-btn:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.header-btn:disabled {
+    color: #5f6368; /* A more faded color for disabled state */
+    cursor: not-allowed;
+}
