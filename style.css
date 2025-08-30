@@ -216,35 +216,3 @@ body {
 .hidden {
     display: none !important;
 }
-
-/* Styling for the new header and clear button */
-.header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative; /* This is key for positioning the button */
-}
-
-.header-btn {
-    position: absolute;
-    right: 10px; /* Position it on the right side */
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-btn:hover:not(:disabled) {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-.header-btn:disabled {
-    color: #5f6368; /* A more faded color for disabled state */
-    cursor: not-allowed;
-}

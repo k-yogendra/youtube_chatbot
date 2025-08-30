@@ -1,11 +1,11 @@
 // Listen for a message from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "getTranscript") {
-        getTranscriptWithInnerTube().then(videoData => {
-            if (videoData.error) {
-                sendResponse({ error: videoData.error });
+        getTranscriptWithInnerTube().then(transcript => {
+            if (typeof transcript === 'string' && transcript.startsWith('Error:')) {
+                sendResponse({ error: transcript.substring(7) });
             } else {
-                sendResponse({ videoData: videoData });
+                sendResponse({ transcript: transcript });
             }
         }).catch(error => {
             sendResponse({ error: error.message });
@@ -15,20 +15,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 /**
- * Extracts the video's title and description from the page.
- * @returns {{title: string, description: string}}
- */
-function getVideoMetadata() {
-    const title = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string')?.textContent.trim() || 'Title not found';
-    
-    const descriptionContainer = document.querySelector('#description-inline-expander .content, #description .content');
-    const description = descriptionContainer?.textContent.trim() || 'Description not found';
-    
-    return { title, description };
-}
-
-/**
  * Extracts the necessary API key and client version from the page's scripts.
+ * This mimics the logic of the successful Node.js script.
  * @returns {object|null} An object with apiKey and clientVersion, or null.
  */
 function getInnertubeConfig() {
@@ -49,24 +37,21 @@ function getInnertubeConfig() {
     return null;
 }
 
-
 /**
- * Main function to get transcript and metadata using the InnerTube API.
+ * Main function to get transcript using the InnerTube API, inspired by the Node.js script.
  */
 async function getTranscriptWithInnerTube() {
     try {
-        // 1. Get metadata from the page first.
-        const metadata = getVideoMetadata();
-
-        // 2. Get the transcript using the API (existing logic).
         const config = getInnertubeConfig();
-        if (!config) throw new Error("Could not retrieve Innertube credentials from the page.");
+        if (!config) {
+            throw new Error("Could not retrieve Innertube credentials from the page.");
+        }
         const { apiKey, clientVersion } = config;
 
         const videoId = new URLSearchParams(window.location.search).get('v');
         if (!videoId) throw new Error("Could not find video ID in the URL.");
 
-        // Construct a clean, simple context object.
+        // Construct a clean, simple context object, just like the Node.js script.
         const payload = {
             context: {
                 client: {
@@ -94,6 +79,7 @@ async function getTranscriptWithInnerTube() {
              throw new Error(reason);
         }
         
+        // Use the same track picking logic as the Node.js script for consistency
         const track = captionTracks.find(t => t.languageCode === 'en') || 
                       captionTracks.find(t => t.languageCode?.startsWith('en')) || 
                       captionTracks[0];
@@ -109,23 +95,18 @@ async function getTranscriptWithInnerTube() {
         const transcript = parseTranscriptXML(rawData);
         if (!transcript) throw new Error("Fetched transcript data, but failed to parse it.");
         
-        console.log("Successfully retrieved transcript, title, and description!");
-        
-        // 3. Combine all data into a single object to send back.
-        return {
-            transcript: transcript,
-            title: metadata.title,
-            description: metadata.description
-        };
+        console.log("Successfully retrieved and parsed transcript!");
+        return transcript;
 
     } catch (error) {
         console.error("YouTube Chatbot Error:", error);
-        return { error: error.message };
+        return `Error: ${error.message}`;
     }
 }
 
 /**
  * Parses the TimedText XML format into a simple string.
+ * This mimics the parsing logic of the Node.js script.
  * @param {string} xmlText The raw XML transcript data.
  * @returns {string|null} The full transcript string without timestamps.
  */
@@ -136,6 +117,7 @@ function parseTranscriptXML(xmlText) {
         const textNodes = xmlDoc.querySelectorAll('text, p');
         let fullText = "";
         
+        // Use a textarea element to correctly decode HTML entities like &#39;
         const tempElement = document.createElement('textarea');
         
         textNodes.forEach(node => {
