@@ -1,6 +1,52 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize the markdown-it library
     const md = window.markdownit();
+    // Speech Synthesis support check
+    const canSpeak = 'speechSynthesis' in window;
+    const synth = window.speechSynthesis;
+    // Speech Recognition (voice input)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const canListen = !!SpeechRecognition;
+
+    // Request mic permission proactively (works around 'not-allowed')
+    async function ensureMicPermission() {
+        if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) return true;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
+            return true;
+        } catch (err) {
+            addMessageToChat('bot', 'Microphone permission is blocked. Please allow it in browser settings and try again.');
+            return false;
+        }
+    }
+    
+    let recog = null;
+    if (canListen) {
+        recog = new SpeechRecognition();
+        recog.continuous = false;
+        recog.interimResults = true;
+        recog.lang = navigator.language || 'en-US';
+    }
+
+
+    function stripHTML(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    function speakText(text) {
+        if (!canSpeak) return;
+        // Cancel any ongoing speech first
+        synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.0;
+        utter.pitch = 1.0;
+        utter.lang = navigator.language || 'en-US';
+        synth.speak(utter);
+    }
+
 
     // UI Elements
     const apiKeySection = document.getElementById('api-key-section');
@@ -12,65 +58,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusArea = document.getElementById('status-area');
     const statusText = document.getElementById('status-text');
     
-    const chatWindow = document.getElementById('chat-window');
+    
+// Load saved chat history
+chrome.storage.local.get(['chat_history'], (result) => {
+    if (result.chat_history && Array.isArray(result.chat_history)) {
+        result.chat_history.forEach(msg => {
+            addMessageToChat(msg.sender, msg.text);
+        });
+    }
+});
+
+function saveMessage(sender, text) {
+    chrome.storage.local.get(['chat_history'], (result) => {
+        const history = result.chat_history || [];
+        history.push({ sender, text });
+        chrome.storage.local.set({ chat_history: history });
+    });
+}
+const chatWindow = document.getElementById('chat-window');
     const userQuestionInput = document.getElementById('user-question');
     const sendBtn = document.getElementById('send-btn');
     const messageTemplate = document.getElementById('chat-message-template');
-
-    let transcript = '';
+    const micBtn = document.getElementById('mic-btn');
+    const clearBtn = document.getElementById('clear-chat-btn');
+let transcript = '';
     let apiKey = '';
 
-    // --- Core Functions ---
+        // --- Core Functions ---
 
-    function showStatus(text, showLoader = false) {
-        statusArea.classList.remove('hidden');
-        statusText.textContent = text;
-        statusArea.querySelector('.loader').style.display = showLoader ? 'block' : 'none';
-    }
-
-    function hideStatus() {
-        statusArea.classList.add('hidden');
-    }
-
-    function toggleChatInput(enabled) {
-        userQuestionInput.disabled = !enabled;
-        sendBtn.disabled = !enabled;
-    }
-
-    function addMessageToChat(sender, text) {
-        const messageClone = messageTemplate.content.cloneNode(true);
-        const messageDiv = messageClone.querySelector('.message');
-        const contentDiv = messageClone.querySelector('.message-content');
-        const copyBtn = messageClone.querySelector('.copy-btn');
-        
-        messageDiv.classList.add(`${sender}-message`);
-        
-        if (sender === 'bot' && text === '...') {
-            contentDiv.classList.add('thinking-message');
-            const loader = document.createElement('div');
-            loader.className = 'loader';
-            contentDiv.appendChild(loader);
-            messageDiv.id = 'thinking-bubble';
-            copyBtn.remove();
-        } else {
-            const rawText = text;
-            contentDiv.innerHTML = md.render(rawText);
-
-            if (sender === 'user') {
-                copyBtn.remove();
-            } else {
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(rawText);
-                    copyBtn.title = 'Copied!';
-                    setTimeout(() => { copyBtn.title = 'Copy text'; }, 2000);
-                });
+    // --- Mic (voice-to-text) ---
+    if (micBtn) {
+        micBtn.addEventListener('click', async () => {
+            if (!canListen) {
+                addMessageToChat('bot', 'Voice input is not supported in this browser.');
+                return;
             }
-        }
-        
-        chatWindow.appendChild(messageClone);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+                } catch (err) {
+                    addMessageToChat('bot', 'Microphone permission is blocked. Please allow it and try again.');
+                    return;
+                }
+            }
+            try { synth.cancel(); } catch (_) {}
+            userQuestionInput.focus();
+            micBtn.classList.add('listening');
+            userQuestionInput.placeholder = 'Listening...';
+
+            let finalText = '';
+            recog.onresult = (e) => {
+                let interim = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const t = e.results[i][0].transcript;
+                    if (e.results[i].isFinal) finalText += t;
+                    else interim += t;
+                }
+                userQuestionInput.value = (finalText + ' ' + interim).trim();
+            };
+            recog.onerror = (evt) => {
+                micBtn.classList.remove('listening');
+                userQuestionInput.placeholder = 'Ask a question...';
+                addMessageToChat('bot', `Mic error: ${evt.error || 'unknown error'}`);
+            
+                if (evt && evt.error === 'not-allowed') {
+                    const settingsUrl = `chrome://settings/content/siteDetails?site=chrome-extension://${chrome.runtime.id}`;
+                    try { chrome.tabs.create({ url: settingsUrl }); } catch (_) {}
+                }
+        };
+            recog.onend = () => {
+                micBtn.classList.remove('listening');
+                userQuestionInput.placeholder = 'Ask a question...';
+                const q = userQuestionInput.value.trim();
+                if (q) sendBtn.click();
+            };
+            try {
+                recog.start();
+            } catch (e) {
+                try { recog.stop(); } catch(_) {}
+                setTimeout(() => { try { recog.start(); } catch(_) {} }, 150);
+            }
+        });
     }
 
+    // --- Clear chat ---
     // --- Event Listeners and Logic ---
 
     chrome.storage.local.get(['openai_api_key'], (result) => {
@@ -206,4 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
             userQuestionInput.focus();
         }
     }
+
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+// Clear chat
+    clearChatBtn?.addEventListener('click', () => {
+        chatWindow.innerHTML = '';
+        chrome.storage.local.set({ chat_history: [] });
+    });
+
 });

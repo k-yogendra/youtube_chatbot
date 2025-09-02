@@ -4,9 +4,9 @@
   "version": "1.0",
   "description": "Chat with YouTube video transcripts using ChatGPT.",
   "permissions": [
-    "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "https://www.youtube.com/*"

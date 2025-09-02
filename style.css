@@ -216,3 +216,92 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* TTS button */
+.tts-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-left: 6px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.tts-btn:hover { 
+    background: rgba(255,255,255,0.08); 
+    color: var(--text-primary);
+}
+
+
+/* Header clear button */
+.header-btn {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+}
+.header-btn:hover { color: var(--text-primary); }
+
+/* Mic button */
+#mic-btn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 5px;
+}
+#mic-btn:hover { color: var(--accent-hover); }
+#mic-btn svg { display: block; }
+
+
+/* Header actions (right side) */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.header-actions button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.header-actions button:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+}
+
+/* Chat input buttons */
+#chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#chat-input-area button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 10px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+#chat-input-area button:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+}
+#mic-btn.listening {
+    background: rgba(138,180,248,0.15);
+    color: var(--accent-primary);
+}
+
+/* Keep send button sizing consistent */
+#send-btn svg { width: 24px; height: 24px; }
+#mic-btn svg { width: 24px; height: 24px; }
